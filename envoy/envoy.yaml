@@ -37,51 +37,56 @@ static_resources:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
 
   clusters:
-    - name: service_a
-      connect_timeout: 1s
-      type: STRICT_DNS
-      load_assignment:
-        cluster_name: service_a
-        endpoints:
-          - lb_endpoints:
-              - endpoint:
-                  address:
-                    socket_address: { address: service-a, port_value: 8081 }
-      circuit_breakers:
-        thresholds:
-          - max_connections: 10
-            max_pending_requests: 5
-            max_retries: 2
-      health_checks:
-        - timeout: 1s
-          interval: 5s
-          unhealthy_threshold: 2
-          healthy_threshold: 1
-          http_health_check:
-            path: /hello-a
-
-    - name: service_b
-      connect_timeout: 1s
-      type: STRICT_DNS
-      load_assignment:
-        cluster_name: service_b
-        endpoints:
-          - lb_endpoints:
-              - endpoint:
-                  address:
-                    socket_address: { address: service-b, port_value: 8082 }
-      circuit_breakers:
-        thresholds:
-          - max_connections: 10
-            max_pending_requests: 5
-            max_retries: 2
-      health_checks:
-        - timeout: 1s
-          interval: 5s
-          unhealthy_threshold: 2
-          healthy_threshold: 1
-          http_health_check:
-            path: /hello-b
+  - name: service_a
+    connect_timeout: 1s
+    type: STRICT_DNS
+    load_assignment:
+      cluster_name: service_a
+      endpoints:
+        - priority: 0  # Primário: service-a
+          lb_endpoints:
+            - endpoint:
+                address:
+                  socket_address: { address: service-a, port_value: 8081 }
+        - priority: 1  # Failover: service-b
+          lb_endpoints:
+            - endpoint:
+                address:
+                  socket_address: { address: service-b, port_value: 8082 }
+    circuit_breakers:
+      thresholds:
+        - max_connections: 10
+          max_pending_requests: 5
+          max_retries: 2
+    health_checks:
+      - timeout: 1s
+        interval: 5s
+        unhealthy_threshold: 2
+        healthy_threshold: 1
+        http_health_check:
+          path: /hello-a
+  - name: service_b
+    connect_timeout: 1s
+    type: STRICT_DNS
+    load_assignment:
+      cluster_name: service_b
+      endpoints:
+        - lb_endpoints:
+            - endpoint:
+                address:
+                  socket_address: { address: service-b, port_value: 8082 }
+    circuit_breakers:
+      thresholds:
+        - max_connections: 10
+          max_pending_requests: 5
+          max_retries: 2
+    health_checks:
+      - timeout: 1s
+        interval: 5s
+        unhealthy_threshold: 2
+        healthy_threshold: 1
+        http_health_check:
+          path: /hello-b
 
 admin:
   access_log_path: "/tmp/admin_access.log"
